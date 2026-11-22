@@ -1,0 +1,39 @@
+bootstrap : 1000 tirages sur 5731 groupes, graine 0
+
+=== Comparaisons principales (tests bilatéraux, Holm sur les 4)
+                               comparaison  valeur  ic_bas  ic_haut     p  p_holm  rejet_h0_holm
+AUC(M1->MusicGen) - moyenne des autres = 0  -0.041  -0.052   -0.029 0.002   0.008           True
+                   AUC(M0->MusicGen) = 0,5   0.747   0.717    0.776 0.002   0.008           True
+ AUC(M1->MusicGen) - AUC(M0->MusicGen) = 0   0.049   0.016    0.089 0.010   0.010           True
+     ΔAUC(M1) - ΔAUC(M3) = 0, vitesse x1,1  -0.317  -0.345   -0.287 0.002   0.008           True
+
+AUC M1 par générateur
+             codec        generateur   auc  ic_bas  ic_haut
+ encodec_24k_6kbps          musicgen 0.796   0.779    0.814
+ encodec_24k_6kbps stable_audio_open 0.615   0.579    0.651
+ encodec_24k_6kbps         audioldm2 0.896   0.875    0.916
+ encodec_24k_6kbps          musicldm 0.899   0.879    0.916
+ encodec_24k_6kbps          mustango 0.938   0.923    0.951
+encodec_24k_12kbps          musicgen 0.777   0.759    0.798
+encodec_24k_12kbps stable_audio_open 0.609   0.573    0.647
+encodec_24k_12kbps         audioldm2 0.874   0.852    0.896
+encodec_24k_12kbps          musicldm 0.890   0.870    0.909
+encodec_24k_12kbps          mustango 0.900   0.881    0.918
+
+ΔAUC (attaque - propre) sur MusicGen
+detecteur   attaque  auc_propre  auc_attaque  valeur  ic_bas  ic_haut
+       m1   mp3_128       0.796        0.799   0.003   0.002    0.004
+       m1 speed_0.9       0.796        0.634  -0.162  -0.179   -0.144
+       m1 speed_1.1       0.796        0.499  -0.297  -0.324   -0.267
+       m3   mp3_128       0.761        0.790   0.029   0.025    0.034
+       m3 speed_0.9       0.761        0.771   0.010   0.003    0.017
+       m3 speed_1.1       0.761        0.781   0.020   0.013    0.028
+       m2   mp3_128       0.444        0.646   0.202   0.187    0.219
+       m2 speed_0.9       0.444        0.215  -0.229  -0.272   -0.185
+       m2 speed_1.1       0.444        0.431  -0.013  -0.065    0.037
+
+ΔAUC(M1) - ΔAUC(M3)
+  attaque  delta_m1  delta_m3     p  valeur  ic_bas  ic_haut
+  mp3_128     0.003     0.029 0.002  -0.026  -0.031   -0.022
+speed_0.9    -0.162     0.010 0.002  -0.172  -0.189   -0.154
+speed_1.1    -0.297     0.020 0.002  -0.317  -0.345   -0.287

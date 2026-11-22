@@ -1,0 +1,10 @@
+{
+  "detector": "m0",
+  "variant": "residual",
+  "codec": "encodec_24k_12kbps",
+  "threshold": 0.9512447349217793,
+  "fpr_target": 0.01,
+  "val_auc": 0.82403208196859,
+  "n_train": 5776,
+  "n_val": 756
+}

@@ -1,0 +1,10 @@
+{
+  "detector": "m3",
+  "variant": null,
+  "codec": "encodec_24k_12kbps",
+  "threshold": 0.41930729448795334,
+  "fpr_target": 0.01,
+  "val_auc": 0.9994750986814478,
+  "n_train": 5776,
+  "n_val": 756
+}

@@ -1,0 +1,25 @@
+test,metadonnee,auc,separabilite,valeurs_reel,valeurs_faux
+fmc:musicgen,meta_sample_rate,0.0,1.0,"44100, 48000",16000
+fmc:musicgen,meta_channels,0.0068306010928961824,0.9931693989071038,"1, 2",1
+fmc:musicgen,meta_bit_rate,1.0,1.0,"128000.0, 160000.0, 166228.0, 178675.0",512000.0
+fmc:musicgen,meta_duration,0.0,1.0,"29.988571, 30.0, 30.014694",10.18
+fmc:stable_audio_open,meta_sample_rate,0.0,1.0,"44100, 48000",16000
+fmc:stable_audio_open,meta_channels,0.0068306010928961824,0.9931693989071038,"1, 2",1
+fmc:stable_audio_open,meta_bit_rate,1.0,1.0,"128000.0, 160000.0, 166228.0, 178675.0",512000.0
+fmc:stable_audio_open,meta_duration,0.0,1.0,"29.988571, 30.0, 30.014694",10.0
+fmc:audioldm2,meta_sample_rate,0.0,1.0,"44100, 48000",16000
+fmc:audioldm2,meta_channels,0.0068306010928961824,0.9931693989071038,"1, 2",1
+fmc:audioldm2,meta_bit_rate,1.0,1.0,"128000.0, 160000.0, 166228.0, 178675.0",512000.0
+fmc:audioldm2,meta_duration,0.0,1.0,"29.988571, 30.0, 30.014694",10.0
+fmc:musicldm,meta_sample_rate,0.0,1.0,"44100, 48000",16000
+fmc:musicldm,meta_channels,0.0068306010928961824,0.9931693989071038,"1, 2",1
+fmc:musicldm,meta_bit_rate,1.0,1.0,"128000.0, 160000.0, 166228.0, 178675.0",512000.0
+fmc:musicldm,meta_duration,0.0,1.0,"29.988571, 30.0, 30.014694",10.0
+fmc:mustango,meta_sample_rate,0.0,1.0,"44100, 48000",16000
+fmc:mustango,meta_channels,0.0068306010928961824,0.9931693989071038,"1, 2",1
+fmc:mustango,meta_bit_rate,1.0,1.0,"128000.0, 160000.0, 166228.0, 178675.0",512000.0
+fmc:mustango,meta_duration,0.0,1.0,"29.988571, 30.0, 30.014694",10.242
+fma:encodec_24k_6kbps,meta_sample_rate,0.5,0.5,"44100, 48000","44100, 48000"
+fma:encodec_24k_6kbps,meta_channels,0.5,0.5,"1, 2","1, 2"
+fma:encodec_24k_6kbps,meta_bit_rate,0.5,0.5,"128000.0, 160000.0, 166228.0, 178675.0","128000.0, 160000.0, 166228.0, 178675.0"
+fma:encodec_24k_6kbps,meta_duration,0.5,0.5,"29.988571, 30.0, 30.014694","29.988571, 30.0, 30.014694"
