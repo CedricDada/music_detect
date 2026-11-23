@@ -7,6 +7,12 @@ Open, AudioLDM2, MusicLDM, Mustango). Une chaîne commune est conçue pour qu'un
 par le codec : même aller-retour de rééchantillonnage (24 puis 16 kHz), alignement, découpe aux mêmes instants,
 niveau RMS à −23 dBFS. Le rapport complet est dans [`report/main.pdf`](report/main.pdf).
 
+![Fakeprint d'une reconstruction EnCodec](assets/readme/fakeprint.gif)
+
+Ce que cherche le détecteur M1 : en moyennant 40 fenêtres du spectre d'une reconstruction EnCodec, la musique se
+dilue et les pics laissés par le décodeur ressortent, espacés de 75 Hz, la cadence d'EnCodec 24 kHz (24 000
+échantillons par seconde, 320 par trame). Ce profil, moins son enveloppe, est le fakeprint.
+
 Travaux répliqués : Afchar et al. 2024 et ICASSP 2025 ([2405.04181](https://arxiv.org/abs/2405.04181),
 [2501.10111](https://arxiv.org/abs/2501.10111)), Afchar et al., ISMIR 2025
 ([2506.19108](https://arxiv.org/abs/2506.19108)), Dugelay et al., ISMIR 2026
@@ -20,6 +26,23 @@ Travaux répliqués : Afchar et al. 2024 et ICASSP 2025 ([2405.04181](https://ar
 | Les artefacts suivent-ils la cadence du décodeur ? | soutenu, avec une réserve | entraîné sur l'EnCodec de MusicGen (50 trames/s), M1 passe de 0,796 à 0,997 sur MusicGen ; mais ce codec a aussi un débit plus faible (2,2 contre 6 kbit/s) |
 | Une partie de la performance vient-elle du format des fichiers ? | oui, limite du protocole | M0 atteint 0,747 sur MusicGen |
 | Le fakeprint en log-fréquence résiste-t-il à la vitesse ? | répliqué, et étendu au MP3 | vitesse ×1,1 : M1 de 0,796 à 0,499, M3 sans perte |
+
+![Contraste de peigne des poids de M1](assets/readme/peigne_appris.gif)
+
+Le contraste de peigne des poids de M1 (leur valeur moyenne, en écarts-types, aux multiples d'un espacement
+donné) culmine à 75 et 150 Hz : M1 a appris le peigne de la cadence de son codec.
+
+![Peigne de MusicGen à 50 Hz, poids de M1 puis de l'oracle](assets/readme/oracle_50hz.gif)
+
+MusicGen laisse un peigne espacé de 50 Hz, dont M1 ne voit qu'un pic sur trois. Entraîné sur l'EnCodec de
+MusicGen, l'oracle s'aligne sur 50 Hz et passe de 0,796 à 0,997 sur MusicGen ; le débit plus faible de ce codec
+reste un facteur confondu.
+
+![Accélérer de 10 % : les pics quittent les poids de M1](assets/readme/vitesse.gif)
+
+Schéma : accélérer de 10 % multiplie toutes les fréquences par 1,1, les pics quittent les poids de M1 et son AUC
+sur MusicGen tombe à 0,499. Sur une échelle logarithmique, ce décalage devient une translation que M3 rattrape
+(0,761 sans attaque, 0,781 sous l'accélération).
 
 Contrôles : sur des artistes jamais vus, M1 sépare parfaitement FMA et FMA-EnCodec (AUC 1,000). Avec un codec
 identité, dont les faux sont identiques aux réels, tous les détecteurs obtiennent 0,500 : rien hors du signal ne
