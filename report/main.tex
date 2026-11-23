@@ -80,9 +80,6 @@ oppose deux bases de données différentes (section~\ref{sec:donnees}).
 \section{Ce que disent les papiers}
 \label{sec:papiers}
 
-Chaque affirmation ci-dessous a été relue dans le papier (version HTML d'arXiv). La section du papier est
-indiquée entre parenthèses.
-
 \subsection{Détecter des reconstructions d'auto-encodeurs (Afchar et al., 2024 et 2025)}
 
 Afchar et al. \cite{afchar2024easy} entraînent un CNN (six couches de convolution, environ 1,6~million de
@@ -221,16 +218,67 @@ généré à du réel. C'est un choix de ce protocole, pas une propriété des m
 \subsection{Chaîne de normalisation commune}
 
 L'objectif de la chaîne (figure~\ref{fig:chaine}) est que la seule différence entre un segment réel et son faux
-soit le passage par le codec. Chaque piste FMA est décodée en mono à sa fréquence native. La branche « faux »
-passe à 24~kHz, traverse EnCodec \cite{defossez2022encodec} (6 ou 12~kbit/s), puis redescend à 16~kHz, la
-fréquence de FakeMusicCaps. La branche « réel » subit le même aller-retour de rééchantillonnage, sans le codec.
-Le faux est aligné sur le réel par corrélation croisée (retard estimé entre $-1$ et 2 échantillons). Les deux
-sont découpés aux mêmes instants et normalisés au même niveau RMS ($-23$~dBFS, avec un limiteur de crête
-déclenché sur 0,56~\% des segments). Les extraits FakeMusicCaps ne passent que par la découpe et la
-normalisation de niveau.
+soit le passage par le codec. Sans elle, un détecteur pourrait séparer les deux classes grâce à n'importe quel
+autre écart : fréquence d'échantillonnage, filtre de rééchantillonnage, décalage temporel, volume. Chaque étape
+retire l'un de ces écarts.
 
-Un contrôle négatif vérifie la chaîne : un « codec identité » produit des faux qui ne diffèrent des réels que
-par le traitement commun. Tout détecteur doit y obtenir une AUC de 0,5.
+\paragraph{Fréquences d'échantillonnage.} Chaque piste FMA (MP3 à 44,1 ou 48~kHz) est décodée en mono à sa
+fréquence native. EnCodec 24~kHz \cite{defossez2022encodec} ne traite que du son à 24~kHz : la branche « faux »
+est donc rééchantillonnée à 24~kHz, traverse le codec, puis redescend à 16~kHz. Cette dernière fréquence est
+imposée par FakeMusicCaps, dont tous les extraits sont à 16~kHz. Une fois tout ramené à 16~kHz, réels et faux
+ont le même nombre d'échantillons par seconde et la même bande passante maximale (8~kHz), qui ne peuvent plus
+servir d'indice.
+
+\paragraph{Débit du codec.} EnCodec 24~kHz propose cinq débits, 1,5, 3, 6, 12 et 24~kbit/s, qui correspondent à
+2, 4, 8, 16 et 32 dictionnaires de quantification (75 trames par seconde, 10 bits par dictionnaire). On en a
+retenu deux, 6 et 12~kbit/s, sans critère formel : deux débits intermédiaires, dont le premier dégrade davantage
+le son. Ce choix pèse peu sur les conclusions, puisqu'un détecteur entraîné à l'un transfère sans perte vers
+l'autre (section~\ref{sec:controles}).
+
+\paragraph{Aller-retour de la branche réelle.} Chaque rééchantillonnage applique un filtre passe-bas (soxr,
+qualité VHQ), qui peut laisser sa propre trace près de sa fréquence de coupure. Si les réels passaient
+directement de leur fréquence native à 16~kHz alors que les faux passent par 24~kHz, les deux branches
+subiraient des filtres différents, et un détecteur pourrait apprendre cette différence au lieu du codec. La
+branche « réel » suit donc le même chemin, fréquence native, puis 24~kHz, puis 16~kHz, en sautant seulement le
+codec : c'est l'aller-retour.
+
+\paragraph{Alignement.} Un codec peut retarder légèrement le signal. Comme le réel et le faux d'une paire sont
+découpés aux mêmes instants, on estime ce retard par corrélation croisée : pour chaque décalage possible, on
+calcule la somme des produits des deux signaux échantillon par échantillon, et l'on retient le décalage qui
+la rend maximale. La recherche porte sur les 4 premières secondes, à 16~kHz, entre $-50$ et $+50$~ms. Le retard
+estimé est resté entre $-1$ et 2 échantillons, soit au plus 0,13~ms : l'étape sert de garde-fou plutôt qu'elle
+ne corrige un défaut important.
+
+\paragraph{Découpe.} Les deux signaux alignés sont coupés en deux segments de 10~s, la durée des extraits
+FakeMusicCaps, aux mêmes positions. Le point de départ est tiré au hasard dans la marge que laissent les 30~s
+de la piste ; il est le même pour le réel et pour ses faux.
+
+\paragraph{Niveau RMS.} Le niveau RMS (\emph{root mean square}) d'un segment est la racine de la moyenne des
+carrés de ses échantillons : il mesure son énergie moyenne. En dBFS (décibels relatifs à la pleine échelle),
+0~dBFS correspond à l'amplitude 1, le maximum qu'un fichier WAV peut représenter ; $-23$~dBFS correspond à un
+RMS de $10^{-23/20} \approx 0{,}071$. Chaque segment, réel ou faux, reçoit le gain qui l'amène à ce niveau. Sans
+cette étape, le volume pourrait séparer les classes, en particulier au test, où les réels FMA et les faux
+FakeMusicCaps sortent de chaînes de production différentes. La valeur $-23$ n'a pas été optimisée, et aucune
+autre n'a été essayée. Elle laisse 23~dB de marge entre le niveau moyen et la pleine échelle, ce qui suffit à
+presque tous les segments (voir le limiteur ci-dessous), et elle reprend le chiffre de la recommandation EBU
+R~128 pour la radiodiffusion ($-23$~LUFS), qui mesure toutefois une sonie pondérée et non un RMS brut.
+
+\paragraph{Limiteur de crête.} Amener le RMS à $-23$~dBFS peut faire dépasser la pleine échelle à un segment
+dont les crêtes dominent largement la moyenne, par exemple une attaque de batterie dans un passage calme. Le
+fichier serait alors écrêté, ce qui ajouterait une distorsion absente de l'original. Quand la crête dépasserait
+0,99, le gain est réduit pour la ramener à 0,99, et le segment reste un peu sous $-23$~dBFS. Cela se produit
+quand la crête dépasse le RMS de plus de 22,9~dB ($0{,}99 / 0{,}071 \approx 14$), ce qui est arrivé sur 0,56~\%
+des segments. Ce pourcentage est un constat, pas un réglage.
+
+Les extraits FakeMusicCaps ne passent que par la découpe et la normalisation de niveau.
+
+\paragraph{Contrôle par codec identité.} Le « codec identité » renvoie son entrée sans la modifier. Les faux
+qu'il produit suivent donc exactement le chemin de la branche réelle (fréquence native, 24~kHz, 16~kHz), avec
+le même alignement, la même découpe et le même niveau : ils sont identiques aux réels, échantillon par
+échantillon. Aucun détecteur ne peut rien y apprendre, et une AUC différente de 0,5 trahirait une fuite
+ailleurs dans le pipeline (étiquettes, index, découpage par artiste, entraînement). Ce contrôle vérifie
+l'assemblage du pipeline, pas le traitement du signal : il ne mesure pas, par exemple, ce qu'aurait coûté
+l'absence d'aller-retour.
 
 Pour l'oracle MusicGen (section~\ref{sec:peigne}), la branche « faux » passe à 32~kHz par l'EnCodec de MusicGen.
 Les réels appariés restent ceux de l'aller-retour à 24~kHz, à l'entraînement comme au test : l'oracle voit donc
@@ -330,12 +378,13 @@ M3 et M2 (graine~1) sont évalués sur exactement les mêmes segments.
 \section{Résultats}
 
 \subsection{Contrôles : la chaîne ne fuit pas}
+\label{sec:controles}
 
 Sur leur propre domaine (FMA contre FMA-EnCodec, artistes jamais vus), les détecteurs appris séparent presque
 parfaitement les deux classes : AUC de 1,000 pour M1, de 0,996 à 0,999 pour M2 et M3. Passer d'un débit à
 l'autre (6 vers 12~kbit/s et inversement) ne coûte rien, comme le transfert entre débits observé par Afchar et
-al. \cite{afchar2024easy}. Sur le contrôle identité, tous les détecteurs obtiennent 0,500 : aucun
-artefact de traitement ne distingue les deux branches. M0 obtient 0,849 sur son domaine, ce qui est attendu : le
+al. \cite{afchar2024easy}. Sur le contrôle identité, tous les détecteurs obtiennent 0,500 : en dehors du
+signal, rien dans le pipeline ne trahit la classe. M0 obtient 0,849 sur son domaine, ce qui est attendu : le
 codec réduit réellement la bande passante, et M0 la mesure. M4, entraîné sur d'autres générateurs, reconnaît mal
 les reconstructions EnCodec (0,563).
 
@@ -542,7 +591,7 @@ le mieux est aussi ce qui se distingue le plus de FMA par des propriétés de fo
 \paragraph{Verdict.} \textbf{Oui}, mais c'est surtout une limite de notre protocole, pas une découverte sur les
 détecteurs. Le raccourci vient de l'opposition entre deux bases (FMA et FakeMusicCaps), faute de vrais extraits
 MusicCaps. Afchar et al. contrôlent ce risque à l'entraînement en appariant chaque piste réelle et sa
-reconstruction \cite{afchar2024easy} ; notre entraînement fait de même, et le contrôle identité le confirme.
+reconstruction \cite{afchar2024easy} ; notre entraînement fait de même.
 Le raccourci n'apparaît qu'au test.
 
 \subsection{Q4 : robustesse aux attaques}
@@ -686,7 +735,8 @@ Ce qui est propre à ce projet :
     \item l'évaluation sur les cinq générateurs de FakeMusicCaps, et sous MP3 à 128~kbit/s ;
     \item la lecture en fréquence des poids appris (peigne à 75~Hz contre 50~Hz), qui illustre l'explication
     de Fourier, et l'oracle MusicGen, qui la teste directement ;
-    \item les contrôles « codec identité » et M0 : le premier montre que la chaîne ne fuit pas, le second
+    \item les contrôles « codec identité » et M0 : le premier vérifie que l'assemblage du pipeline ne trahit
+    pas la classe, le second
     qu'une grande part des AUC sur FakeMusicCaps tient à l'écart entre bases ;
     \item la méthode d'évaluation : bootstrap groupé par artiste ou légende, comparaisons appariées, plusieurs
     graines ;

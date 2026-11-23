@@ -3,7 +3,9 @@
 Réplication de trois travaux de Deezer sur la détection de musique générée par IA, dans un cadre où aucune
 musique générée ne sert à l'entraînement. Les détecteurs apprennent à distinguer 2 000 pistes de FMA de leur
 reconstruction par EnCodec, puis sont testés sur les cinq générateurs de FakeMusicCaps (MusicGen, Stable Audio
-Open, AudioLDM2, MusicLDM, Mustango). Le rapport complet est dans [`report/main.pdf`](report/main.pdf).
+Open, AudioLDM2, MusicLDM, Mustango). Une chaîne commune est conçue pour qu'un réel et son faux ne diffèrent que
+par le codec : même aller-retour de rééchantillonnage (24 puis 16 kHz), alignement, découpe aux mêmes instants,
+niveau RMS à −23 dBFS. Le rapport complet est dans [`report/main.pdf`](report/main.pdf).
 
 Travaux répliqués : Afchar et al. 2024 et ICASSP 2025 ([2405.04181](https://arxiv.org/abs/2405.04181),
 [2501.10111](https://arxiv.org/abs/2501.10111)), Afchar et al., ISMIR 2025
@@ -15,9 +17,13 @@ Travaux répliqués : Afchar et al. 2024 et ICASSP 2025 ([2405.04181](https://ar
 | Question | Verdict | Chiffres |
 |---|---|---|
 | Un détecteur entraîné sur des reconstructions détecte-t-il de vrais générateurs ? | impossible à conclure ici | AUC de 0,62 à 0,94 pour le fakeprint (M1), mais 0,61 à 0,97 pour un détecteur trivial (M0) |
-| Les artefacts suivent-ils la cadence du décodeur ? | soutenu, avec une réserve | entraîné sur l'EnCodec de MusicGen, M1 passe de 0,796 à 0,997 sur MusicGen ; le débit est confondu |
+| Les artefacts suivent-ils la cadence du décodeur ? | soutenu, avec une réserve | entraîné sur l'EnCodec de MusicGen (50 trames/s), M1 passe de 0,796 à 0,997 sur MusicGen ; mais ce codec a aussi un débit plus faible (2,2 contre 6 kbit/s) |
 | Une partie de la performance vient-elle du format des fichiers ? | oui, limite du protocole | M0 atteint 0,747 sur MusicGen |
 | Le fakeprint en log-fréquence résiste-t-il à la vitesse ? | répliqué, et étendu au MP3 | vitesse ×1,1 : M1 de 0,796 à 0,499, M3 sans perte |
+
+Contrôles : sur des artistes jamais vus, M1 sépare parfaitement FMA et FMA-EnCodec (AUC 1,000). Avec un codec
+identité, dont les faux sont identiques aux réels, tous les détecteurs obtiennent 0,500 : rien hors du signal ne
+trahit la classe.
 
 Limite principale : FakeMusicCaps ne contient pas les vrais extraits MusicCaps, donc les négatifs des tests sont
 des morceaux FMA. Les autres limites sont dans le rapport.
